@@ -1,0 +1,5 @@
+MakeHuman core base mesh, adult targets, special suit skins, short01/bob01 hair and low-poly eyes. CC0 1.0.
+https://github.com/makehumancommunity/makehuman
+https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html
+Three.js r160, MIT. https://github.com/mrdoob/three.js
+Meshes converted and fitted with original StylO conversion script. No MakeHuman application source is bundled.
