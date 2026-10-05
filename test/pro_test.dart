@@ -12,6 +12,8 @@ void main() {
   });
 
   testWidgets('fără magazin configurat, abonarea e dezactivată', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       const MaterialApp(home: PaywallScreen(reason: 'Test')),
     );
