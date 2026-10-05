@@ -1,0 +1,78 @@
+name: Android APK
+
+# Rulează doar la push pe branch-urile proiectului sau manual.
+# Nu folosește pull_request_target și nu are acces la secrete externe.
+on:
+  push:
+    branches: [main, 'feature/**']
+  workflow_dispatch:
+
+# Drepturi minime: citește codul și publică un release cu APK-ul.
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Versiuni
+        run: flutter --version
+
+      - name: Dependențe
+        run: flutter pub get
+
+      - name: Analiză
+        id: analyze
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee analyze.txt
+
+      - name: Teste
+        id: tests
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter test 2>&1 | tee tests.txt
+
+      - name: APK
+        id: apk
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee build.txt
+
+      - name: Publică rezultatele
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+          FILES="analyze.txt tests.txt build.txt"
+          [ -f build/app/outputs/flutter-apk/app-release.apk ] && cp build/app/outputs/flutter-apk/app-release.apk stylo.apk && FILES="$FILES stylo.apk"
+          gh release create "$TAG" $FILES --prerelease --target "${{ github.sha }}" \
+            --title "Build ${{ github.run_number }} (${{ github.ref_name }})" \
+            --notes "analyze: ${{ steps.analyze.outcome }}, teste: ${{ steps.tests.outcome }}, apk: ${{ steps.apk.outcome }}"
+
+      - name: Eșuează dacă un pas a picat
+        if: steps.analyze.outcome == 'failure' || steps.tests.outcome == 'failure' || steps.apk.outcome == 'failure'
+        run: exit 1
