@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../models/clothing_item.dart';
 import '../providers/wardrobe_provider.dart';
 import '../services/garment_storage.dart';
+import '../services/pro_service.dart';
+import '../ui/screens/paywall_screen.dart';
 import 'usage_guide_screen.dart';
 
 class AddClothingScreen extends StatefulWidget {
@@ -102,6 +104,18 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       return;
     }
     final provider = context.read<WardrobeProvider>();
+    if (!ProService.of(context).canAdd(provider.length)) {
+      final pro = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const PaywallScreen(
+            reason:
+                'Ai ajuns la ${ProService.freeItemLimit} de piese în varianta gratuită.',
+          ),
+        ),
+      );
+      if (pro != true || !mounted) return;
+    }
     final source = _showOriginal || _cutout == null ? _original! : _cutout!;
     setState(() {
       _saving = true;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'services/garment_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -7,6 +9,7 @@ import 'providers/wardrobe_provider.dart';
 import 'theme/theme_preferences.dart';
 import 'services/outfit_history_service.dart';
 import 'services/avatar_preferences.dart';
+import 'services/pro_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +20,18 @@ Future<void> main() async {
   await ThemePreferences.init();
   final wardrobe = WardrobeProvider();
   await wardrobe.init();
-  runApp(ChangeNotifierProvider.value(value: wardrobe, child: const MyApp()));
+  final pro = ProService();
+  // Fără await: pornirea aplicației nu așteaptă rețeaua magazinului.
+  unawaited(pro.init());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: wardrobe),
+        ChangeNotifierProvider.value(value: pro),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

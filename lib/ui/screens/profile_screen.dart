@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/avatar_preferences.dart';
+import '../../services/pro_service.dart';
 import '../../theme/theme_preferences.dart';
+import 'paywall_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -26,6 +28,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final pro = ProService.of(context, listen: true);
     return Scaffold(
       appBar: AppBar(title: const Text('Profilul meu')),
       body: ListView(
@@ -44,6 +47,33 @@ class ProfileScreen extends StatelessWidget {
             style: TextStyle(color: colors.onSurfaceVariant),
           ),
           const SizedBox(height: 28),
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 10,
+              ),
+              leading: Icon(
+                Icons.workspace_premium_rounded,
+                color: colors.primary,
+              ),
+              title: const Text(
+                'Stylo Pro',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(
+                pro.isPro
+                    ? 'Activ · piese nelimitate'
+                    : 'Piese nelimitate · ${pro.priceLabel}/lună',
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PaywallScreen()),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
           const Text(
             'ASPECTUL APLICAȚIEI',
             style: TextStyle(

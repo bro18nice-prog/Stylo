@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/clothing_item.dart';
 import '../providers/wardrobe_provider.dart';
+import '../services/outfit_history_service.dart';
 import '../ui/components/clothing_tile.dart';
+import '../ui/components/hanger_rail.dart';
 import 'add_clothing_screen.dart';
 import 'clothing_details_screen.dart';
 import 'usage_guide_screen.dart';
@@ -49,6 +52,18 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   }
 
   bool favorites = false;
+  bool railView = true;
+  int railIndex = 0;
+
+  void _openDetails(List<ClothingItem> all, ClothingItem item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ClothingDetailsScreen(initialIndex: all.indexOf(item)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final wardrobe = context.watch<WardrobeProvider>().items;
@@ -65,6 +80,13 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
       appBar: AppBar(
         title: const Text('Garderoba mea'),
         actions: [
+          IconButton(
+            tooltip: railView ? 'Vezi ca grilă' : 'Vezi pe umerașe',
+            icon: Icon(
+              railView ? Icons.grid_view_rounded : Icons.checkroom_rounded,
+            ),
+            onPressed: () => setState(() => railView = !railView),
+          ),
           IconButton(
             tooltip: 'Ghid utilizare',
             icon: const Icon(Icons.help_outline),
@@ -215,6 +237,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 ),
               ),
             )
+          else if (railView)
+            SliverToBoxAdapter(child: _railSection(wardrobe, items, colors))
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
@@ -241,6 +265,69 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _railSection(
+    List<ClothingItem> wardrobe,
+    List<ClothingItem> items,
+    ColorScheme colors,
+  ) {
+    final position = railIndex.clamp(0, items.length - 1).toInt();
+    final selected = items[position];
+    final lastWorn = OutfitHistoryService.lastWornLabel(selected.imagePath);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: SizedBox(
+              height: 440,
+              child: HangerRail(
+                items: items,
+                onIndexChanged: (index) {
+                  if (mounted && index != railIndex) {
+                    setState(() => railIndex = index);
+                  }
+                },
+                onOpen: (index) => _openDetails(wardrobe, items[index]),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      selected.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${position + 1} / ${items.length}'
+                      '${lastWorn == null ? '' : ' · $lastWorn'}',
+                      style: TextStyle(color: colors.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              FilledButton.tonal(
+                onPressed: () => _openDetails(wardrobe, selected),
+                child: const Text('Detalii'),
+              ),
+            ],
+          ),
         ],
       ),
     );
