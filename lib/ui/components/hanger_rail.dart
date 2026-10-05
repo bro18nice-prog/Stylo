@@ -287,9 +287,11 @@ class _RailPainter extends CustomPainter {
     for (final i in order) {
       final d = i - physics.scroll;
       final ad = d.abs();
-      final scale = baseScale * math.max(.62, 1 - .15 * ad);
-      final x = size.width / 2 + d * physics.spacing * (1 - .08 * math.min(ad, 2));
-      final shade = 1 - math.min(.6, ad * .24);
+      final double scale = (baseScale * math.max(.62, 1 - .15 * ad)).toDouble();
+      final double x =
+          size.width / 2 +
+          d * physics.spacing * (1 - .08 * math.min(ad, 2.0)).toDouble();
+      final double shade = (1 - math.min(.6, ad * .24)).toDouble();
       final angle = i < physics.angle.length ? physics.angle[i] : 0.0;
 
       canvas.save();
